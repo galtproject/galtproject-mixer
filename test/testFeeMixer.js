@@ -100,4 +100,27 @@ contract('ExpelFundMemberProposal', accounts => {
       await assertRevert(this.mixer.removeSource(id1, { from: alice }));
     });
   });
+
+  describe('Destination management', () => {
+    it('allow the owner set destinations in a single action', async function() {
+      let res = await this.mixer.getDestinations();
+      assert.sameMembers(res.addresses, []);
+      assert.sameMembers(res.shares, []);
+
+      await this.mixer.setDestinations([alice, bob, charlie, dan], [10, 40, 30, 20], { from: coreTeam });
+
+      res = await this.mixer.getDestinations();
+      assert.sameMembers(res.addresses, [alice, bob, charlie, dan]);
+      assert.sameMembers(res.shares.map(v => v.toNumber(10)), [10, 40, 30, 20]);
+
+      await this.mixer.setDestinations([alice], [100], { from: coreTeam });
+
+      res = await this.mixer.getDestinations();
+      assert.sameMembers(res.addresses, [alice]);
+      assert.sameMembers(res.shares.map(v => v.toNumber(10)), [100]);
+
+      // no permission
+      await assertRevert(this.mixer.setDestinations([bob], [100], { from: alice }));
+    });
+  });
 });

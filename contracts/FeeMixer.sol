@@ -23,6 +23,7 @@ contract FeeMixer is Ownable {
 
   event AddSource(bytes32 id, address indexed addr);
   event RemoveSource(bytes32 id, address indexed addr);
+  event SetDestinations(uint256 count);
 
   struct Source {
     address addr;
@@ -30,7 +31,10 @@ contract FeeMixer is Ownable {
     bytes data;
   }
 
-  mapping(bytes32 => Source) sourceDetails;
+  address[] private destinationAddresses;
+  uint256[] private destinationShares;
+
+  mapping(bytes32 => Source) private sourceDetails;
 
   ArraySet.AddressSet private managers;
   ArraySet.Bytes32Set private sources;
@@ -43,6 +47,21 @@ contract FeeMixer is Ownable {
     require(managers.has(msg.sender), "Not a manager");
 
     _;
+  }
+
+  function removeSource(bytes32 _id) external onlyOwner {
+    // keep sourceDetails
+    sources.remove(_id);
+
+    emit RemoveSource(_id, sourceDetails[_id].addr);
+  }
+
+  function addManager(address _manager) external onlyOwner {
+    managers.add(_manager);
+  }
+
+  function removeManager(address _manager) external onlyOwner {
+    managers.remove(_manager);
   }
 
   function addSource(address _addr, uint256 _value, bytes calldata _data) external onlyOwner {
@@ -61,19 +80,22 @@ contract FeeMixer is Ownable {
     emit AddSource(id, _addr);
   }
 
-  function removeSource(bytes32 _id) external onlyOwner {
-    // keep sourceDetails
-    sources.remove(_id);
+  function setDestinations(address[] calldata _addresses, uint256[] calldata _shares) external onlyOwner {
+    require(_addresses.length == _shares.length, "Address and share lengths should be equal");
 
-    emit RemoveSource(_id, sourceDetails[_id].addr);
-  }
+    uint256 total = 0;
+    uint256 len = _shares.length;
 
-  function addManager(address _manager) external onlyOwner {
-    managers.add(_manager);
-  }
+    for (uint256 i = 0; i < len; i++) {
+      total += _shares[i];
+    }
 
-  function removeManager(address _manager) external onlyOwner {
-    managers.remove(_manager);
+    require(total == 100, "Total shares should be equal 100%");
+
+    destinationAddresses = _addresses;
+    destinationShares = _shares;
+
+    emit SetDestinations(len);
   }
 
   // GETTERS
@@ -112,5 +134,13 @@ contract FeeMixer is Ownable {
     addr = s.addr;
     value = s.value;
     data = s.data;
+  }
+
+  function getDestinations() external view returns (address[] memory addresses, uint256[] memory shares) {
+    return (destinationAddresses, destinationShares);
+  }
+
+  function getDestinationCount() external view returns (uint256) {
+    return destinationAddresses.length;
   }
 }
