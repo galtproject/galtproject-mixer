@@ -14,21 +14,14 @@
 pragma solidity 0.5.3;
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 
-contract MockApplication {
+contract MockApplicationNonPayable {
   IERC20 galtToken;
 
   constructor(IERC20 _galtToken) public {
     galtToken = _galtToken;
   }
 
-  function claimProtocolEthFee() external {
-    msg.sender.transfer(address(this).balance);
-  }
-
   function claimProtocolGaltFee(bytes32 _applicationId) external {
     galtToken.transfer(msg.sender, galtToken.balanceOf(address(this)));
-  }
-
-  function () external payable {
   }
 }

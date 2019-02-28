@@ -9,7 +9,7 @@ let web3;
 
 const Helpers = {
   initHelperWeb3(_web3) {
-    web3 = new Web3(_web3.currentProvider);
+    web3 = _web3;
   },
   zeroAddress: '0x0000000000000000000000000000000000000000',
   hex(input) {
@@ -98,12 +98,12 @@ const Helpers = {
       .add(adjust); // <- 0.01 ether
 
     assert(
-      diff.lt(max), // diff < 0.01 ether
+      diff.lte(max), // diff < 0.01 ether
       `Expected ${web3.utils.fromWei(diff.toString(10))} (${diff.toString(10)} wei) to be less than 0.01 ether`
     );
 
     assert(
-      diff.gt(min), // diff > 0
+      diff.gte(min), // diff > 0
       `Expected ${web3.utils.fromWei(diff.toString(10))} (${diff.toString(10)} wei) to be greater than 0`
     );
   },

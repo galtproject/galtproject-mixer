@@ -16,6 +16,7 @@ pragma solidity 0.5.3;
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "@galtproject/libs/contracts/collections/ArraySet.sol";
+import "./mocks/MockApplication.sol";
 
 contract FeeMixer is Ownable {
   using ArraySet for ArraySet.AddressSet;
@@ -24,6 +25,8 @@ contract FeeMixer is Ownable {
   event AddSource(bytes32 id, address indexed addr);
   event RemoveSource(bytes32 id, address indexed addr);
   event SetDestinations(uint256 count);
+  event CallSource(bytes32 indexed id, address indexed manager, bool ok);
+  event CallSourceFailed(bytes32 indexed id, address indexed manager, address destination, bytes data);
 
   struct Source {
     address addr;
@@ -98,6 +101,44 @@ contract FeeMixer is Ownable {
     emit SetDestinations(len);
   }
 
+  // Trigger contract  contract using `call()` to the source
+  function callSource(bytes32 _sourceId) external onlyManager returns (bool) {
+    Source storage s = sourceDetails[_sourceId];
+
+    require(sources.has(_sourceId) == true, "Invalid ID");
+
+    address destination = s.addr;
+    address payable dest = address(uint160(destination));
+    bytes memory data = s.data;
+    uint256 dataLength = s.data.length;
+
+    bool result;
+
+    assembly {
+        let x := mload(0x40)   // "Allocate" memory for output (0x40 is where "free memory" pointer is stored by convention)
+        let d := add(data, 32) // First 32 bytes are the padded length of data, so exclude that
+        result := call(
+            sub(gas, 34710),   // 34710 is the value that solidity is currently emitting
+                               // It includes callGas (700) + callVeryLow (3, to pay for SUB) + callValueTransferGas (9000) +
+                               // callNewAccountGas (25000, in case the destination address does not exist and needs creating)
+            destination,
+            0,                 // Passing in value option doesn't supported
+            d,
+            dataLength,        // Size of the input (in bytes) - this is what fixes the padding problem
+            x,
+            0                  // Output is ignored, therefore the output size is zero
+        )
+    }
+
+    emit CallSource(_sourceId, msg.sender, result);
+
+    if (result == false) {
+      emit CallSourceFailed(_sourceId, msg.sender, destination, data);
+    }
+
+    return result;
+  }
+
   // GETTERS
 
   function getManagers() external view returns (address[] memory) {
@@ -142,5 +183,8 @@ contract FeeMixer is Ownable {
 
   function getDestinationCount() external view returns (uint256) {
     return destinationAddresses.length;
+  }
+
+  function () external payable {
   }
 }
