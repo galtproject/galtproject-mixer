@@ -14,7 +14,7 @@
 pragma solidity 0.5.3;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "@galtproject/libs/contracts/collections/ArraySet.sol";
 import "./mocks/MockApplication.sol";
 
@@ -27,6 +27,10 @@ contract FeeMixer is Ownable {
   event SetDestinations(uint256 count);
   event CallSource(bytes32 indexed id, address indexed manager, bool ok);
   event CallSourceFailed(bytes32 indexed id, address indexed manager, address destination, bytes data);
+  event DistributeEthBeneficiary(address beneficiary, uint256 amount);
+  event DistributeEth(address manager, uint256 beneficiaries, uint256 passedInAmount, uint256 distributedAmount);
+  event DistributeERC20Beneficiary(address beneficiary, uint256 amount);
+  event DistributeERC20(address manager, uint256 beneficiaries, uint256 passedInAmount, uint256 distributedAmount);
 
   struct Source {
     address addr;
@@ -137,6 +141,46 @@ contract FeeMixer is Ownable {
     }
 
     return result;
+  }
+
+  function distributeEth(uint256 _value) external onlyManager {
+    require(_value <= address(this).balance, "Not enough funds");
+
+    uint256 total = 0;
+    uint256 reward = 0;
+    address payable beneficiary;
+
+    for (uint256 i = 0; i < destinationShares.length; i++) {
+      reward = _value * destinationShares[i] / 100;
+      beneficiary = address(uint160(destinationAddresses[i]));
+      beneficiary.transfer(reward);
+      total += reward;
+
+      emit DistributeEthBeneficiary(beneficiary, reward);
+    }
+
+    emit DistributeEth(msg.sender, destinationAddresses.length, _value, total);
+  }
+
+  function distributeERC20(address _erc20Contract, uint256 _value) external onlyManager {
+    IERC20 token = IERC20(_erc20Contract);
+
+    require(_value <= token.balanceOf(address(this)), "Not enough funds");
+
+    uint256 total = 0;
+    uint256 reward = 0;
+    address beneficiary;
+
+    for (uint256 i = 0; i < destinationShares.length; i++) {
+      reward = _value * destinationShares[i] / 100;
+      beneficiary = destinationAddresses[i];
+      token.transfer(beneficiary, reward);
+      total += reward;
+
+      emit DistributeERC20Beneficiary(beneficiary, reward);
+    }
+
+    emit DistributeERC20(msg.sender, destinationAddresses.length, _value, total);
   }
 
   // GETTERS

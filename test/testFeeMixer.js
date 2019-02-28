@@ -236,4 +236,80 @@ contract('ExpelFundMemberProposal', accounts => {
       assertGaltBalanceChanged(mockApplication2GaltBalanceBefore, mockApplication2GaltBalanceAfter, ether(-1500));
     });
   });
+
+  describe('Balance distribution', () => {
+    it('should distribute provided amount of ETHs', async function() {
+      const mixer = await FeeMixer.new({ from: coreTeam });
+
+      await mixer.addManager(alice, { from: coreTeam });
+      await mixer.addManager(bob, { from: coreTeam });
+
+      await mixer.setDestinations([eve, frank, george, hannah], [10, 40, 35, 15], { from: coreTeam });
+
+      await web3.eth.sendTransaction({
+        from: alice,
+        to: mixer.address,
+        value: ether(777)
+      });
+
+      assert.equal(await web3.eth.getBalance(mixer.address), ether(777));
+
+      const eveBalanceBefore = await web3.eth.getBalance(eve);
+      const frankBalanceBefore = await web3.eth.getBalance(frank);
+      const georgeBalanceBefore = await web3.eth.getBalance(george);
+      const hannahBalanceBefore = await web3.eth.getBalance(hannah);
+
+      await mixer.distributeEth(ether(222), { from: alice });
+
+      const eveBalanceAfter = await web3.eth.getBalance(eve);
+      const frankBalanceAfter = await web3.eth.getBalance(frank);
+      const georgeBalanceAfter = await web3.eth.getBalance(george);
+      const hannahBalanceAfter = await web3.eth.getBalance(hannah);
+
+      // 222 ether * 10% = 22.2 ether
+      assertEthBalanceChanged(eveBalanceBefore, eveBalanceAfter, ether(22.2));
+      // 222 ether * 40% = 88.8 ether
+      assertEthBalanceChanged(frankBalanceBefore, frankBalanceAfter, ether(88.8));
+      // 222 ether * 35% = 77.7 ether
+      assertEthBalanceChanged(georgeBalanceBefore, georgeBalanceAfter, ether(77.7));
+      // 222 ether * 15% = 33.3 ether
+      assertEthBalanceChanged(hannahBalanceBefore, hannahBalanceAfter, ether(33.3));
+
+      assert.equal(await web3.eth.getBalance(mixer.address), ether(555));
+    });
+
+    it('should distribute provided amount of ERC20', async function() {
+      const mixer = await FeeMixer.new({ from: coreTeam });
+
+      await mixer.addManager(alice, { from: coreTeam });
+      await mixer.addManager(bob, { from: coreTeam });
+
+      await mixer.setDestinations([eve, frank, george, hannah], [10, 40, 37, 13], { from: coreTeam });
+
+      await this.mockCoin.transfer(mixer.address, ether(179), { from: coreTeam });
+
+      const eveBalanceBefore = new BN(await this.mockCoin.balanceOf(eve)).toString(10);
+      const frankBalanceBefore = new BN(await this.mockCoin.balanceOf(frank)).toString(10);
+      const georgeBalanceBefore = new BN(await this.mockCoin.balanceOf(george)).toString(10);
+      const hannahBalanceBefore = new BN(await this.mockCoin.balanceOf(hannah)).toString(10);
+
+      await mixer.distributeERC20(this.mockCoin.address, ether(179), { from: bob });
+
+      const eveBalanceAfter = new BN(await this.mockCoin.balanceOf(eve)).toString(10);
+      const frankBalanceAfter = new BN(await this.mockCoin.balanceOf(frank)).toString(10);
+      const georgeBalanceAfter = new BN(await this.mockCoin.balanceOf(george)).toString(10);
+      const hannahBalanceAfter = new BN(await this.mockCoin.balanceOf(hannah)).toString(10);
+
+      // 179 ether * 10% = 17.9 ether
+      assertGaltBalanceChanged(eveBalanceBefore, eveBalanceAfter, ether(17.9));
+      // 179 ether * 40% = 71.6 ether
+      assertGaltBalanceChanged(frankBalanceBefore, frankBalanceAfter, ether(71.6));
+      // 179 ether * 37% = 66.23 ether
+      assertGaltBalanceChanged(georgeBalanceBefore, georgeBalanceAfter, ether(66.23));
+      // 179 ether * 13% = 23.27 ether
+      assertGaltBalanceChanged(hannahBalanceBefore, hannahBalanceAfter, ether(23.27));
+
+      assert.equal(await web3.eth.getBalance(mixer.address), ether(0));
+    });
+  });
 });
