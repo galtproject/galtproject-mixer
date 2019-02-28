@@ -19,17 +19,21 @@ import "@galtproject/libs/contracts/collections/ArraySet.sol";
 
 contract FeeMixer is Ownable {
   using ArraySet for ArraySet.AddressSet;
+  using ArraySet for ArraySet.Bytes32Set;
+
+  event AddSource(bytes32 id, address indexed addr);
+  event RemoveSource(bytes32 id, address indexed addr);
 
   struct Source {
-    bool exists;
     address addr;
     uint256 value;
     bytes data;
   }
 
-  mapping(bytes32 => Source) sources;
+  mapping(bytes32 => Source) sourceDetails;
 
   ArraySet.AddressSet private managers;
+  ArraySet.Bytes32Set private sources;
 
   constructor() public {
 
@@ -44,13 +48,24 @@ contract FeeMixer is Ownable {
   function addSource(address _addr, uint256 _value, bytes calldata _data) external onlyOwner {
     bytes32 id = keccak256(abi.encode(_addr, _value, _data));
 
-    Source storage s = sources[id];
-    require(s.exists == false, "Source already exists");
+    require(sources.has(id) == false, "Source already exists");
 
-    s.exists = true;
+    Source storage s = sourceDetails[id];
+
     s.addr = _addr;
     s.value = _value;
     s.data = _data;
+
+    sources.add(id);
+
+    emit AddSource(id, _addr);
+  }
+
+  function removeSource(bytes32 _id) external onlyOwner {
+    // keep sourceDetails
+    sources.remove(_id);
+
+    emit RemoveSource(_id, sourceDetails[_id].addr);
   }
 
   function addManager(address _manager) external onlyOwner {
@@ -67,7 +82,35 @@ contract FeeMixer is Ownable {
      return managers.elements();
   }
 
-  function getManagersCount() external view returns (uint256) {
+  function getManagerCount() external view returns (uint256) {
     return managers.size();
+  }
+
+  function getSources() external view returns (bytes32[] memory) {
+    return sources.elements();
+  }
+
+  function getSourceCount() external view returns (uint256) {
+    return sources.size();
+  }
+
+  function getSource(
+    bytes32 _id
+  )
+    external
+    view
+    returns (
+      bool active,
+      address addr,
+      uint256 value,
+      bytes memory data
+    )
+  {
+    Source storage s = sourceDetails[_id];
+
+    active = sources.has(_id);
+    addr = s.addr;
+    value = s.value;
+    data = s.data;
   }
 }
