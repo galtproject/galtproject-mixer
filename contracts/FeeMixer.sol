@@ -18,6 +18,7 @@ import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "@galtproject/libs/contracts/collections/ArraySet.sol";
 import "./mocks/MockApplication.sol";
 
+
 contract FeeMixer is Ownable {
   using ArraySet for ArraySet.AddressSet;
   using ArraySet for ArraySet.Bytes32Set;
@@ -45,10 +46,6 @@ contract FeeMixer is Ownable {
 
   ArraySet.AddressSet private managers;
   ArraySet.Bytes32Set private sources;
-
-  constructor() public {
-
-  }
 
   modifier onlyManager() {
     require(managers.has(msg.sender), "Not a manager");
@@ -112,7 +109,6 @@ contract FeeMixer is Ownable {
     require(sources.has(_sourceId) == true, "Invalid ID");
 
     address destination = s.addr;
-    address payable dest = address(uint160(destination));
     bytes memory data = s.data;
     uint256 dataLength = s.data.length;
 
@@ -186,7 +182,7 @@ contract FeeMixer is Ownable {
   // GETTERS
 
   function getManagers() external view returns (address[] memory) {
-     return managers.elements();
+    return managers.elements();
   }
 
   function getManagerCount() external view returns (uint256) {
