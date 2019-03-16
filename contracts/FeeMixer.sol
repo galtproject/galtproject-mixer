@@ -17,9 +17,10 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "@galtproject/libs/contracts/collections/ArraySet.sol";
 import "./mocks/MockApplication.sol";
+import "./unstructured-storage/Initializable.sol";
 
 
-contract FeeMixer is Ownable {
+contract FeeMixer is Ownable, Initializable {
   using ArraySet for ArraySet.AddressSet;
   using ArraySet for ArraySet.Bytes32Set;
 
@@ -39,13 +40,13 @@ contract FeeMixer is Ownable {
     bytes data;
   }
 
-  address[] private destinationAddresses;
-  uint256[] private destinationShares;
+  address[] internal destinationAddresses;
+  uint256[] internal destinationShares;
 
-  mapping(bytes32 => Source) private sourceDetails;
+  mapping(bytes32 => Source) internal sourceDetails;
 
-  ArraySet.AddressSet private managers;
-  ArraySet.Bytes32Set private sources;
+  ArraySet.AddressSet internal managers;
+  ArraySet.Bytes32Set internal sources;
 
   modifier onlyManager() {
     require(managers.has(msg.sender), "Not a manager");
@@ -58,6 +59,10 @@ contract FeeMixer is Ownable {
     sources.remove(_id);
 
     emit RemoveSource(_id, sourceDetails[_id].addr);
+  }
+
+  function initialize(address _newOwner) external isInitializer {
+    _transferOwnership(_newOwner);
   }
 
   function addManager(address _manager) external onlyOwner {
