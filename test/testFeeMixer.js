@@ -12,7 +12,7 @@ const bytes32 = utf8ToHex;
 
 initHelperWeb3(web3);
 
-contract('ExpelFundMemberProposal', accounts => {
+contract('FeeMixer', accounts => {
   // Managers: alice, bob ,charlie, dan
   // Destinations: eve, frank, george, hannah
   const [coreTeam, alice, bob, charlie, dan, eve, frank, george, hannah] = accounts;
