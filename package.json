@@ -7,7 +7,7 @@
   },
   "devDependencies": {
     "@galtproject/eslint-config-galt": "git+https://github.com/galtspace/eslint-config-galt.git",
-    "@galtproject/libs": "git+ssh://github.com/galtspace/galtproject-libs.git#1b2e5ae",
+    "@galtproject/libs": "git+ssh://github.com/galtspace/galtproject-libs.git#d0cdbf3",
     "@galtproject/utils": "^0.9.1",
     "eslint": "^5.16.0",
     "cli-table": "^0.3.1",

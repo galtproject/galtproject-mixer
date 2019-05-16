@@ -13,14 +13,13 @@
 
 pragma solidity 0.5.7;
 
-import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "@galtproject/libs/contracts/traits/OwnableAndInitializable.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "@galtproject/libs/contracts/collections/ArraySet.sol";
 import "./mocks/MockApplication.sol";
-import "./unstructured-storage/Initializable.sol";
 
 
-contract FeeMixer is Ownable, Initializable {
+contract FeeMixer is OwnableAndInitializable {
   using ArraySet for ArraySet.AddressSet;
   using ArraySet for ArraySet.Bytes32Set;
 
