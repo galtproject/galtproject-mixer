@@ -38,14 +38,14 @@ contract FeeMixer is OwnableAndInitializable {
   uint256[] internal destinationShares;
 
   mapping(bytes32 => Source) internal sourceDetails;
-  mapping(address => ArraySet.Bytes32Set) internal sourcesByDestination;
+  mapping(address => ArraySet.Bytes32Set) internal sourcesByAddress;
 
   ArraySet.Bytes32Set internal sources;
 
   function removeSource(bytes32 _id) external onlyOwner {
     // keep sourceDetails
     sources.remove(_id);
-    sourcesByDestination[sourceDetails[_id].addr].remove(_id);
+    sourcesByAddress[sourceDetails[_id].addr].remove(_id);
 
     emit RemoveSource(_id, sourceDetails[_id].addr);
   }
@@ -65,7 +65,7 @@ contract FeeMixer is OwnableAndInitializable {
     s.data = _data;
 
     sources.add(id);
-    sourcesByDestination[_addr].add(id);
+    sourcesByAddress[_addr].add(id);
 
     emit AddSource(id, _addr);
   }
@@ -175,12 +175,12 @@ contract FeeMixer is OwnableAndInitializable {
     return sources.size();
   }
 
-  function getSourcesByDestination(address _destination) external view returns (bytes32[] memory) {
-    return sourcesByDestination[_destination].elements();
+  function getSourcesByAddress(address _destination) external view returns (bytes32[] memory) {
+    return sourcesByAddress[_destination].elements();
   }
 
-  function getSourcesByDestinationCount(address _destination) external view returns (uint256) {
-    return sourcesByDestination[_destination].size();
+  function getSourcesByAddressCount(address _destination) external view returns (uint256) {
+    return sourcesByAddress[_destination].size();
   }
 
   function getSource(

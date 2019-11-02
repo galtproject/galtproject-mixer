@@ -74,11 +74,11 @@ contract('FeeMixer', accounts => {
 
       res = await this.mixer.getSources();
       assert.sameMembers(res, [id1, id2, id3]);
-      res = await this.mixer.getSourcesByDestination(this.mockCoin.address);
+      res = await this.mixer.getSourcesByAddress(this.mockCoin.address);
       assert.sameMembers(res, [id1, id2, id3]);
       res = await this.mixer.getSourceCount();
       assert.equal(res, 3);
-      res = await this.mixer.getSourcesByDestinationCount(this.mockCoin.address);
+      res = await this.mixer.getSourcesByAddressCount(this.mockCoin.address);
       assert.equal(res, 3);
 
       res = await this.mixer.getSource(id1);
