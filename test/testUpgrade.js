@@ -12,7 +12,7 @@ initHelperWeb3(web3);
 contract('Proxy', accounts => {
   // Managers: alice, bob ,charlie, dan
   // Destinations: eve, frank, george, hannah
-  const [coreTeam, alice, bob, charlie, dan] = accounts;
+  const [coreTeam, alice, bob] = accounts;
 
   // alice is an owner of both the proxy and the mixer contract
   describe('Manager management', () => {
