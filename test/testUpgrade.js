@@ -1,8 +1,9 @@
 const FeeMixer = artifacts.require('./FeeMixer.sol');
 const MockFeeMixerV2 = artifacts.require('./MockFeeMixerV2.sol');
 const OwnedUpgradeabilityProxy = artifacts.require('./OwnedUpgradeabilityProxy.sol');
+const MockCoin = artifacts.require('./MockCoin.sol');
 
-const { initHelperWeb3, assertRevert } = require('./helpers');
+const { initHelperWeb3, assertRevert, ether } = require('./helpers');
 
 const { web3 } = FeeMixer;
 
@@ -16,6 +17,8 @@ contract('Proxy', accounts => {
   // alice is an owner of both the proxy and the mixer contract
   describe('Manager management', () => {
     it('keep data after upgrade', async function() {
+      const mockCoin = await MockCoin.new({ from: coreTeam });
+
       const proxy = await OwnedUpgradeabilityProxy.new({ from: alice });
       let mixer = await FeeMixer.at(proxy.address);
 
@@ -24,16 +27,20 @@ contract('Proxy', accounts => {
       const txData1 = mixerV1.contract.methods.initialize(alice).encodeABI();
       await proxy.upgradeToAndCall(mixerV1.address, txData1, { from: alice });
 
-      // Add some managers
-      let res = await mixer.getManagers();
-      assert.sameMembers(res, []);
+      // Add some sources
+      const calldata1 = mockCoin.contract.methods.transfer(alice, ether(20)).encodeABI();
+      const calldata2 = mockCoin.contract.methods.transfer(bob, ether(20)).encodeABI();
+      const calldata3 = mockCoin.contract.methods.transfer(alice, ether(30)).encodeABI();
 
-      await mixer.addManager(bob, { from: alice });
-      await mixer.addManager(charlie, { from: alice });
-      await mixer.addManager(dan, { from: alice });
+      let res = await mixer.addSource(mockCoin.address, calldata1, { from: alice });
+      const id1 = res.logs[0].args.id.toString(10);
+      res = await mixer.addSource(mockCoin.address, calldata2, { from: alice });
+      const id2 = res.logs[0].args.id.toString(10);
+      res = await mixer.addSource(mockCoin.address, calldata3, { from: alice });
+      const id3 = res.logs[0].args.id.toString(10);
 
-      res = await mixer.getManagers();
-      assert.sameMembers(res, [bob, charlie, dan]);
+      res = await mixer.getSources();
+      assert.sameMembers(res, [id1, id2, id3]);
 
       // Upgrade to V2
       const mixerV2 = await MockFeeMixerV2.new({ from: coreTeam });
@@ -43,8 +50,8 @@ contract('Proxy', accounts => {
       await assertRevert(proxy.upgradeToAndCall(mixerV2.address, txData2, { from: alice }));
 
       // Assert the values haven't changed
-      res = await mixer.getManagers();
-      assert.sameMembers(res, [bob, charlie, dan]);
+      res = await mixer.getSources();
+      assert.sameMembers(res, [id1, id2, id3]);
 
       // Assert a new methods available
       res = await mixer.getTheAnswer();

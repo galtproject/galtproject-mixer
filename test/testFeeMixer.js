@@ -22,7 +22,7 @@ contract('FeeMixer', accounts => {
     this.mockCoin = await MockCoin.new({ from: coreTeam });
   });
 
-  describe('Manager management', () => {
+  describe.skip('Manager management', () => {
     it('allow manager addition/removal for the owner', async function() {
       let res = await this.mixer.getManagers();
       assert.sameMembers(res, []);
@@ -65,16 +65,20 @@ contract('FeeMixer', accounts => {
       const calldata3 = this.mockCoin.contract.methods.transfer(alice, ether(30)).encodeABI();
       const calldata4 = this.mockCoin.contract.methods.transfer(alice, ether(40)).encodeABI();
 
-      res = await this.mixer.addSource(this.mockCoin.address, 0, calldata1, { from: coreTeam });
+      res = await this.mixer.addSource(this.mockCoin.address, calldata1, { from: coreTeam });
       const id1 = res.logs[0].args.id.toString(10);
-      res = await this.mixer.addSource(this.mockCoin.address, 0, calldata2, { from: coreTeam });
+      res = await this.mixer.addSource(this.mockCoin.address, calldata2, { from: coreTeam });
       const id2 = res.logs[0].args.id.toString(10);
-      res = await this.mixer.addSource(this.mockCoin.address, 0, calldata3, { from: coreTeam });
+      res = await this.mixer.addSource(this.mockCoin.address, calldata3, { from: coreTeam });
       const id3 = res.logs[0].args.id.toString(10);
 
       res = await this.mixer.getSources();
       assert.sameMembers(res, [id1, id2, id3]);
+      res = await this.mixer.getSourcesByDestination(this.mockCoin.address);
+      assert.sameMembers(res, [id1, id2, id3]);
       res = await this.mixer.getSourceCount();
+      assert.equal(res, 3);
+      res = await this.mixer.getSourcesByDestinationCount(this.mockCoin.address);
       assert.equal(res, 3);
 
       res = await this.mixer.getSource(id1);
@@ -84,9 +88,9 @@ contract('FeeMixer', accounts => {
       assert.equal(res.data, calldata1);
 
       // same source
-      await assertRevert(this.mixer.addSource(this.mockCoin.address, 0, calldata1, { from: coreTeam }));
+      await assertRevert(this.mixer.addSource(this.mockCoin.address, calldata1, { from: coreTeam }));
       // no permission
-      await assertRevert(this.mixer.addSource(this.mockCoin.address, 0, calldata4, { from: alice }));
+      await assertRevert(this.mixer.addSource(this.mockCoin.address, calldata4, { from: alice }));
 
       await this.mixer.removeSource(id2, { from: coreTeam });
 
@@ -137,11 +141,6 @@ contract('FeeMixer', accounts => {
 
       const mixer = await FeeMixer.new({ from: coreTeam });
 
-      await mixer.addManager(alice, { from: coreTeam });
-      await mixer.addManager(bob, { from: coreTeam });
-      await mixer.addManager(charlie, { from: coreTeam });
-      // dan is not a manager now
-
       const mockApplication1 = await MockApplication.new(this.mockCoin.address, { from: coreTeam });
       const mockApplication2 = await MockApplicationNonPayable.new(this.mockCoin.address, { from: coreTeam });
 
@@ -163,20 +162,17 @@ contract('FeeMixer', accounts => {
 
       // mockApplication1
       const calldata1 = mockApplication1.contract.methods.claimProtocolEthFee().encodeABI();
-      let res = await mixer.addSource(mockApplication1.address, 0, calldata1, { from: coreTeam });
+      let res = await mixer.addSource(mockApplication1.address, calldata1, { from: coreTeam });
       const fetchEthSource1 = res.logs[0].args.id.toString(10);
 
       const calldata2 = mockApplication1.contract.methods.claimProtocolGaltFee(bytes32('Id')).encodeABI();
-      res = await mixer.addSource(mockApplication1.address, 0, calldata2, { from: coreTeam });
+      res = await mixer.addSource(mockApplication1.address, calldata2, { from: coreTeam });
       const fetchGaltSource1 = res.logs[0].args.id.toString(10);
 
       // mockApplication2
       const calldata4 = mockApplication2.contract.methods.claimProtocolGaltFee(bytes32('Id')).encodeABI();
-      res = await mixer.addSource(mockApplication2.address, 0, calldata4, { from: coreTeam });
+      res = await mixer.addSource(mockApplication2.address, calldata4, { from: coreTeam });
       const fetchGaltSource2 = res.logs[0].args.id.toString(10);
-
-      // not a valid manager
-      await assertRevert(mixer.callSource(fetchEthSource1, { from: dan }));
 
       // > (1) fetchEthSource1
       let mixerBalanceBefore = await web3.eth.getBalance(mixer.address);
@@ -241,9 +237,6 @@ contract('FeeMixer', accounts => {
     it('should distribute provided amount of ETHs', async function() {
       const mixer = await FeeMixer.new({ from: coreTeam });
 
-      await mixer.addManager(alice, { from: coreTeam });
-      await mixer.addManager(bob, { from: coreTeam });
-
       await mixer.setDestinations([eve, frank, george, hannah], [10, 40, 35, 15], { from: coreTeam });
 
       await web3.eth.sendTransaction({
@@ -280,9 +273,6 @@ contract('FeeMixer', accounts => {
 
     it('should distribute provided amount of ERC20', async function() {
       const mixer = await FeeMixer.new({ from: coreTeam });
-
-      await mixer.addManager(alice, { from: coreTeam });
-      await mixer.addManager(bob, { from: coreTeam });
 
       await mixer.setDestinations([eve, frank, george, hannah], [10, 40, 37, 13], { from: coreTeam });
 
