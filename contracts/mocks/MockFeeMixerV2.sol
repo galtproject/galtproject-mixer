@@ -21,7 +21,6 @@ contract MockFeeMixerV2 is FeeMixer {
   bool v2setupDone;
 
   constructor() public {
-    delete managers;
     theAnswer = 15;
   }
 

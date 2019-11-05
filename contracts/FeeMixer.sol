@@ -22,16 +22,15 @@ contract FeeMixer is OwnableAndInitializable {
   event AddSource(bytes32 id, address indexed addr);
   event RemoveSource(bytes32 id, address indexed addr);
   event SetDestinations(uint256 count);
-  event CallSource(bytes32 indexed id, address indexed manager, bool ok);
-  event CallSourceFailed(bytes32 indexed id, address indexed manager, address destination, bytes data);
+  event CallSource(bytes32 indexed id, address indexed sender, bool ok);
+  event CallSourceFailed(bytes32 indexed id, address indexed sender, address destination, bytes data);
   event DistributeEthBeneficiary(address beneficiary, uint256 amount);
-  event DistributeEth(address manager, uint256 beneficiaries, uint256 passedInAmount, uint256 distributedAmount);
+  event DistributeEth(address sender, uint256 beneficiaries, uint256 passedInAmount, uint256 distributedAmount);
   event DistributeERC20Beneficiary(address beneficiary, uint256 amount);
-  event DistributeERC20(address manager, uint256 beneficiaries, uint256 passedInAmount, uint256 distributedAmount);
+  event DistributeERC20(address sender, uint256 beneficiaries, uint256 passedInAmount, uint256 distributedAmount);
 
   struct Source {
     address addr;
-    uint256 value;
     bytes data;
   }
 
@@ -39,19 +38,14 @@ contract FeeMixer is OwnableAndInitializable {
   uint256[] internal destinationShares;
 
   mapping(bytes32 => Source) internal sourceDetails;
+  mapping(address => ArraySet.Bytes32Set) internal sourcesByAddress;
 
-  ArraySet.AddressSet internal managers;
   ArraySet.Bytes32Set internal sources;
-
-  modifier onlyManager() {
-    require(managers.has(msg.sender), "Not a manager");
-
-    _;
-  }
 
   function removeSource(bytes32 _id) external onlyOwner {
     // keep sourceDetails
     sources.remove(_id);
+    sourcesByAddress[sourceDetails[_id].addr].remove(_id);
 
     emit RemoveSource(_id, sourceDetails[_id].addr);
   }
@@ -60,26 +54,18 @@ contract FeeMixer is OwnableAndInitializable {
     _transferOwnership(_newOwner);
   }
 
-  function addManager(address _manager) external onlyOwner {
-    managers.add(_manager);
-  }
-
-  function removeManager(address _manager) external onlyOwner {
-    managers.remove(_manager);
-  }
-
-  function addSource(address _addr, uint256 _value, bytes calldata _data) external onlyOwner {
-    bytes32 id = keccak256(abi.encode(_addr, _value, _data));
+  function addSource(address _addr, bytes calldata _data) external onlyOwner {
+    bytes32 id = keccak256(abi.encode(_addr, _data));
 
     require(sources.has(id) == false, "Source already exists");
 
     Source storage s = sourceDetails[id];
 
     s.addr = _addr;
-    s.value = _value;
     s.data = _data;
 
     sources.add(id);
+    sourcesByAddress[_addr].add(id);
 
     emit AddSource(id, _addr);
   }
@@ -103,7 +89,7 @@ contract FeeMixer is OwnableAndInitializable {
   }
 
   // Trigger contract  contract using `call()` to the source
-  function callSource(bytes32 _sourceId) external onlyManager returns (bool) {
+  function callSource(bytes32 _sourceId) external returns (bool) {
     Source storage s = sourceDetails[_sourceId];
 
     require(sources.has(_sourceId) == true, "Invalid ID");
@@ -139,7 +125,7 @@ contract FeeMixer is OwnableAndInitializable {
     return result;
   }
 
-  function distributeEth(uint256 _value) external onlyManager {
+  function distributeEth(uint256 _value) external {
     require(_value <= address(this).balance, "Not enough funds");
 
     uint256 total = 0;
@@ -158,7 +144,7 @@ contract FeeMixer is OwnableAndInitializable {
     emit DistributeEth(msg.sender, destinationAddresses.length, _value, total);
   }
 
-  function distributeERC20(address _erc20Contract, uint256 _value) external onlyManager {
+  function distributeERC20(address _erc20Contract, uint256 _value) external {
     IERC20 token = IERC20(_erc20Contract);
 
     require(_value <= token.balanceOf(address(this)), "Not enough funds");
@@ -180,21 +166,21 @@ contract FeeMixer is OwnableAndInitializable {
   }
 
   // GETTERS
-
-  function getManagers() external view returns (address[] memory) {
-    return managers.elements();
-  }
-
-  function getManagerCount() external view returns (uint256) {
-    return managers.size();
-  }
-
+  
   function getSources() external view returns (bytes32[] memory) {
     return sources.elements();
   }
 
   function getSourceCount() external view returns (uint256) {
     return sources.size();
+  }
+
+  function getSourcesByAddress(address _destination) external view returns (bytes32[] memory) {
+    return sourcesByAddress[_destination].elements();
+  }
+
+  function getSourcesByAddressCount(address _destination) external view returns (uint256) {
+    return sourcesByAddress[_destination].size();
   }
 
   function getSource(
@@ -213,7 +199,6 @@ contract FeeMixer is OwnableAndInitializable {
 
     active = sources.has(_id);
     addr = s.addr;
-    value = s.value;
     data = s.data;
   }
 
