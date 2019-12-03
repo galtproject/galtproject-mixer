@@ -7,10 +7,10 @@
  * [Basic Agreement](ipfs/QmaCiXUmSrP16Gz8Jdzq6AJESY1EAANmmwha15uR3c1bsS)).
  */
 
-pragma solidity 0.5.10;
+pragma solidity ^0.5.13;
 
 import "@galtproject/libs/contracts/traits/OwnableAndInitializable.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@galtproject/libs/contracts/collections/ArraySet.sol";
 import "./mocks/MockApplication.sol";
 
@@ -166,7 +166,7 @@ contract FeeMixer is OwnableAndInitializable {
   }
 
   // GETTERS
-  
+
   function getSources() external view returns (bytes32[] memory) {
     return sources.elements();
   }
@@ -191,7 +191,6 @@ contract FeeMixer is OwnableAndInitializable {
     returns (
       bool active,
       address addr,
-      uint256 value,
       bytes memory data
     )
   {

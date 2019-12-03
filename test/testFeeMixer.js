@@ -84,7 +84,6 @@ contract('FeeMixer', accounts => {
       res = await this.mixer.getSource(id1);
       assert.equal(res.active, true);
       assert.equal(res.addr, this.mockCoin.address);
-      assert.equal(res.value, 0);
       assert.equal(res.data, calldata1);
 
       // same source
@@ -97,7 +96,6 @@ contract('FeeMixer', accounts => {
       res = await this.mixer.getSource(id2);
       assert.equal(res.active, false);
       assert.equal(res.addr, this.mockCoin.address);
-      assert.equal(res.value, 0);
       assert.equal(res.data, calldata2);
 
       res = await this.mixer.getSources();
