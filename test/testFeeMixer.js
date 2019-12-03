@@ -84,7 +84,6 @@ contract('FeeMixer', accounts => {
       res = await this.mixer.getSource(id1);
       assert.equal(res.active, true);
       assert.equal(res.addr, this.mockCoin.address);
-      assert.equal(res.value, 0);
       assert.equal(res.data, calldata1);
 
       // same source
@@ -97,7 +96,6 @@ contract('FeeMixer', accounts => {
       res = await this.mixer.getSource(id2);
       assert.equal(res.active, false);
       assert.equal(res.addr, this.mockCoin.address);
-      assert.equal(res.value, 0);
       assert.equal(res.data, calldata2);
 
       res = await this.mixer.getSources();
@@ -122,13 +120,19 @@ contract('FeeMixer', accounts => {
 
       res = await this.mixer.getDestinations();
       assert.sameMembers(res.addresses, [eve, frank, george, hannah]);
-      assert.sameMembers(res.shares.map(v => v.toNumber(10)), [10, 40, 30, 20]);
+      assert.sameMembers(
+        res.shares.map(v => v.toNumber(10)),
+        [10, 40, 30, 20]
+      );
 
       await this.mixer.setDestinations([alice], [100], { from: coreTeam });
 
       res = await this.mixer.getDestinations();
       assert.sameMembers(res.addresses, [alice]);
-      assert.sameMembers(res.shares.map(v => v.toNumber(10)), [100]);
+      assert.sameMembers(
+        res.shares.map(v => v.toNumber(10)),
+        [100]
+      );
 
       // no permission
       await assertRevert(this.mixer.setDestinations([bob], [100], { from: alice }));
