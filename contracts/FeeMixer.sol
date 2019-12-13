@@ -12,7 +12,6 @@ pragma solidity ^0.5.13;
 import "@galtproject/libs/contracts/traits/OwnableAndInitializable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@galtproject/libs/contracts/collections/ArraySet.sol";
-import "./mocks/MockApplication.sol";
 
 
 contract FeeMixer is OwnableAndInitializable {
