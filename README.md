@@ -1,6 +1,8 @@
 # Galt Project Protocol Fee Mixer Contract (@galtproject/mixer)
 
-💰 An Ethereum Smart contract. Allows to withdraw ETH or any ERC20 from specified contracts and distribute them between recipient addresses in a predetermined proportion.
+💰 An Ethereum Smart contract. Allows to withdraw ETH or any ERC20 from specified contracts and distribute them between recipient addresses in a predetermined proportion. 
+
+The contract is used to distribute the commission in the Galt Project contracts in Ethereum and xDai.
 
 <a href="https://gitlab.com/galtproject/galtproject-mixer/pipelines" targe="_blank"><img alt="pipeline status" src="https://gitlab.com/galtproject/galtproject-mixer/badges/master/pipeline.svg" /></a>
 
