@@ -1,5 +1,7 @@
 # Galt Project Protocol Fee Mixer Contract (@galtproject/mixer)
 
+💰 Allows one to pick up ETH or ERC20 from specified contracts and distribute them between recipient addresses in a predetermined proportion.
+
 <a href="https://gitlab.com/galtproject/galtproject-mixer/pipelines" targe="_blank"><img alt="pipeline status" src="https://gitlab.com/galtproject/galtproject-mixer/badges/master/pipeline.svg" /></a>
 
 [![Contracts Version](https://img.shields.io/badge/version-0.1.0-orange.svg)](https://github.com/galtspace/galtproject-svg)
@@ -12,7 +14,3 @@
 * `make test` - run tests
 * `make validate` - run solidity and javascript linters
 
-### About Copyright and Software licenses
-The main purpose of Galt Protocol is to create open and reliable instrument for self-government communities of Property Owners. According to that, one of our main goals in Galt Project is to create pure community driven and open software product. For now Galt Project if fully self-funded, we have certain vision and we want to implement it. To ensure the achievement of our vision, before the launch, protocol is open-sourced, but it is and it will be our intellectual property. You need to ask us, if you want to participate or use our code. We will decide if it's possible at that moment.
-
-After the first version of protocol will be released in Ethereum Mainnet and initial Galt Auction will end, we will release all software (including front-end) under one of public licences. But before that, please, respect the time and work of others and the will of the creators!
